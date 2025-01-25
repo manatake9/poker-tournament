@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+
 import { addRoom, getAllRooms } from "../../lib/utils/supabaseFunctions";
+import { ScrollArea } from "../components/ui/scroll-area";
+import { Separator } from "../components/ui/separator";
 
 const PokerScoreManager = () => {
   const [rooms, setRooms] = useState([]);
