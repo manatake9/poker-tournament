@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import RoomList from './RoomList';
 import RoomInputForm from './RoomInputForm';
 
-const RoomPage = ({ allRooms }) => {
+const RoomListPage = ({ allRooms }) => {
     const [rooms, setRooms] = useState(allRooms);
     const addRoom = (rooms) => {
         setRooms(rooms);
@@ -18,4 +18,4 @@ const RoomPage = ({ allRooms }) => {
   )
 }
 
-export default RoomPage
+export default RoomListPage
