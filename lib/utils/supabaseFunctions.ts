@@ -6,6 +6,5 @@ export const getAllRooms = async () => {
 };
 
 export const addRoom = async (room : string) => {
-    console.log(room);
     await supabase.from("rooms").insert({ room_name: room });
 };
