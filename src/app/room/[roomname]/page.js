@@ -33,16 +33,22 @@ const RoomPage = ({ params }) => {
   };
 
   const navigateToScoreCalculation = () => {
-    router.push(`/room/${roomName}/score-calculation/${score-calcuration}`);
+    router.push(`/room/${roomName}/score-calculation`);
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-4">
       <h1 className="text-3xl font-bold mb-6">現在の得点</h1>
 
-      <Button onClick={navigateToScoreCalculation} className="mb-4">
-        得点計算へ
-      </Button>
+      <div style={{ display: 'flex', justifyContent: 'center', flexDirection: 'row' }}>
+        <Button onClick={() => router.back()} className="mb-4">
+          部屋選択へ戻る
+        </Button>
+
+        <Button onClick={navigateToScoreCalculation} className="mb-4">
+          得点計算へ
+        </Button>
+      </div>
 
       <Card>
         <div>
