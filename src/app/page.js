@@ -26,7 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../components/ui/alert-dialog"
-import { useForm } from "react-hook-form";
+import { useForm } from 'react-hook-form';
 // formをいつかshadcnに直す
 
 const PokerScoreManager = () => {
