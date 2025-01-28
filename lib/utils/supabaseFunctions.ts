@@ -8,3 +8,7 @@ export const getAllRooms = async () => {
 export const addRoom = async (room : string) => {
     await supabase.from("rooms").insert({ room_name: room });
 };
+
+export const deleteRoom = async (roomId) => {
+    await supabase.from("rooms").delete().eq("room_id", roomId);
+};

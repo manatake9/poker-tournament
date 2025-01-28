@@ -12,7 +12,7 @@ const RoomListPage = ({ allRooms }) => {
 
   return (
     <div>
-        <RoomList rooms={rooms} />
+        <RoomList rooms={rooms} onAddRoom={addRoom} />
         <RoomInputForm onAddRoom={addRoom} />
     </div>
   )
