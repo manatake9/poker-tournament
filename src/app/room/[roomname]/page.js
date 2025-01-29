@@ -39,7 +39,6 @@ import {
 } from "../../../components/ui/select"
 // form使うんでselectをshadcn仕様にする
 
-
 const RoomPage = ({ params }) => {
   const { roomName } = params;
   const [players, setPlayers] = useState([]);
@@ -49,7 +48,11 @@ const RoomPage = ({ params }) => {
   const [rankingData, setRankingData] = useState({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
+  const [knockoutEnabled, setKnockoutEnabled] = useState(true);
+  const [knockoutSelections, setKnockoutSelections] = useState({});
+  const [knockoutSelectionVisible, setKnockoutSelectionVisible] = useState({});
   const router = useRouter();
+
 
   const addPlayer = () => {
     if (newPlayerName.trim() !== "") {
@@ -80,6 +83,15 @@ const RoomPage = ({ params }) => {
     }));
   };
 
+  const handleKnockoutSelection = (rank, knockedOutPlayer) => {
+    setKnockoutSelections((prev) => ({
+      ...prev,
+      [rank]: prev[rank]?.includes(knockedOutPlayer)
+        ? prev[rank].filter((name) => name !== knockedOutPlayer)
+        : [...(prev[rank] || []), knockedOutPlayer],
+    }));
+  };
+
   const applyScoreUpdates = () => {
     const totalInputScore = Object.values(rankingData)
       .reduce((sum, { score }) => sum + score, 0);
@@ -94,27 +106,66 @@ const RoomPage = ({ params }) => {
   };
 
   const finalizeScoreUpdate = () => {
+    const debugInfo = [];
+  
     const updatedPlayers = players.map((player) => {
       const playerData = Object.values(rankingData).find(
         (data) => data.player === player.name
       );
+  
       if (playerData) {
-        const newScore =
+        let newScore =
           player.score + (playerData.score - parseInt(initialScore, 10)) / 100;
+        debugInfo.push(`Player ${player.name} initial score adjustment: ${newScore}`);
+        console.log(playerData.score);
+
+        // ノックアウト処理
+        if (knockoutEnabled) {
+          let knockoutBonus = 0;
+          let knockoutPenalty = 0;
+  
+          Object.entries(knockoutSelections).forEach(([rank, knockedOutPlayers]) => {
+            if (playerData.player === rankingData[rank]?.player) {
+              // ノックアウト成功ボーナス
+              knockoutBonus += knockedOutPlayers.length * 10;
+            }
+            if (knockedOutPlayers.includes(player.name)) {
+              // ノックアウトされたペナルティ
+              knockoutPenalty -= 10;
+            }
+          });
+  
+          newScore += knockoutBonus + knockoutPenalty;
+          debugInfo.push(`Player ${player.name} knockout adjustment: bonus=${knockoutBonus}, penalty=${knockoutPenalty}, newScore=${newScore}`);
+        }
+  
+        debugInfo.push(`Final score for Player ${player.name}: ${newScore}`);
         return { ...player, score: newScore };
       }
       return player;
     });
-
     setPlayers(updatedPlayers);
     resetInputStates();
     setDialogOpen(false);
+  
+    // デバッグ情報をコンソール出力
+    debugInfo.forEach(info => console.log(info));
   };
+  
+  
 
   const resetInputStates = () => {
     setSelectedParticipants([]);
     setInitialScore("");
     setRankingData({});
+    setKnockoutSelections({});
+  };
+
+  const toggleKnockoutSelectionVisibility = (rank) => {
+    setKnockoutSelectionVisible((prev) => ({
+      ...prev,
+      [rank]: !prev[rank],
+    }));
   };
 
   return (
@@ -138,80 +189,115 @@ const RoomPage = ({ params }) => {
           </DialogHeader>
 
           <div className="flex flex-col space-y-4 overflow-y-scroll">
-          {/* 参加者選択 */}
-          <div className="mb-4">
-            <label className="block mb-2 font-semibold">参加者を選択:</label>
-            <ScrollArea className="h-32 border p-2">
-              {players.map((player, index) => (
-                <div key={index} className="flex items-center mb-2">
-                  <input
-                    type="checkbox"
-                    checked={selectedParticipants.includes(player.name)}
-                    onChange={() => toggleParticipant(player.name)}
-                    className="mr-2"
-                  />
-                  <span>{player.name}</span>
-                </div>
-              ))}
-            </ScrollArea>
-          </div>
-
-          {/* 初期点の入力 */}
-          <div className="mb-4">
-            <label className="block mb-2 font-semibold">初期持ち点:</label>
-            <Input
-              type="number"
-              value={initialScore}
-              onChange={(e) => {
-                const value = e.target.value;
-                setInitialScore(value && /^\d+$/.test(value) ? value : "");
-              }}
-              placeholder="初期持ち点を入力"
-              className="w-full"
-            />
-          </div>
-
-          {/* 順位に対するプレイヤーと持ち点の入力 */}
-          <div className="mb-4">
-            <label className="block mb-2 font-semibold">順位入力:</label>
-            <ScrollArea className="h-64 border p-2">
-              {Array.from({ length: selectedParticipants.length }).map(
-                (_, rank) => (
-                  <div key={rank} className="flex items-center mb-4">
-                    <span className="mr-4">{rank + 1}位:</span>
-                    <select
-                      value={rankingData[rank + 1]?.player || ""}
-                      onChange={(e) =>
-                        handleRankingDataChange(rank + 1, "player", e.target.value)
-                      }
-                      className="mr-4 border p-1"
-                    >
-                      <option value="">選択してください</option>
-                      {selectedParticipants.map((participant) => (
-                        <option key={participant} value={participant}>
-                          {participant}
-                        </option>
-                      ))}
-                    </select>
-                    <Input
-                      type="number"
-                      value={rankingData[rank + 1]?.score || ""}
-                      onChange={(e) =>
-                        handleRankingDataChange(rank + 1, "score", e.target.value)
-                      }
-                      placeholder="得点"
-                      className="w-32"
+            <div className="mb-4">
+              <label className="block mb-2 font-semibold">参加者を選択:</label>
+              <ScrollArea className="h-32 border p-2">
+                {players.map((player, index) => (
+                  <div key={index} className="flex items-center mb-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedParticipants.includes(player.name)}
+                      onChange={() => toggleParticipant(player.name)}
+                      className="mr-2"
                     />
+                    <span>{player.name}</span>
                   </div>
-                )
-              )}
-            </ScrollArea>
-          </div>
+                ))}
+              </ScrollArea>
+            </div>
 
-          {/* 「結果へ」ボタン */}
-          <Button onClick={applyScoreUpdates} className="w-full">
-            結果へ
-          </Button>
+            <div className="mb-4">
+              <label className="block mb-2 font-semibold">初期持ち点:</label>
+              <Input
+                type="number"
+                value={initialScore}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setInitialScore(value && /^\d+$/.test(value) ? value : "");
+                }}
+                placeholder="初期持ち点を入力"
+                className="w-full"
+              />
+            </div>
+
+            <div className="flex items-center mb-4">
+              <input
+                type="checkbox"
+                checked={knockoutEnabled}
+                onChange={(e) => setKnockoutEnabled(e.target.checked)}
+                className="mr-2"
+              />
+              <label>ノックアウトボーナスを有効にする</label>
+            </div>
+
+            <div className="mb-4">
+              <label className="block mb-2 font-semibold">順位入力:</label>
+              <ScrollArea className="h-64 border p-2 overflow-x-auto">
+                {Array.from({ length: selectedParticipants.length }).map(
+                  (_, rank) => (
+                    <div key={rank} className="flex items-center mb-4">
+                      <span className="mr-4">{rank + 1}位:</span>
+                      <select
+                        value={rankingData[rank + 1]?.player || ""}
+                        onChange={(e) =>
+                          handleRankingDataChange(rank + 1, "player", e.target.value)
+                        }
+                        className="mr-4 border p-1"
+                      >
+                        <option value="">選択してください</option>
+                        {selectedParticipants.map((participant) => (
+                          <option key={participant} value={participant}>
+                            {participant}
+                          </option>
+                        ))}
+                      </select>
+                      <Input
+                        type="number"
+                        value={rankingData[rank + 1]?.score || ""}
+                        onChange={(e) =>
+                          handleRankingDataChange(rank + 1, "score", e.target.value)
+                        }
+                        placeholder="得点"
+                        className="w-32"
+                      />
+                      {knockoutEnabled && (
+                        <div className="ml-4">
+                          <Button
+                            onClick={() => toggleKnockoutSelectionVisibility(rank)}
+                            className="mb-2"
+                          >
+                            ノックアウト選択
+                          </Button>
+                          {knockoutSelectionVisible[rank] && (
+                            <div>
+                              <label className="block text-sm mt-2">ノックアウト:</label>
+                              <ScrollArea className="h-16 border p-1">
+                                {selectedParticipants.map((participant) => (
+                                  participant !== rankingData[rank + 1]?.player && (
+                                    <div key={participant} className="flex items-center mb-1">
+                                      <input
+                                        type="checkbox"
+                                        checked={knockoutSelections[rank]?.includes(participant) || false}
+                                        onChange={() => handleKnockoutSelection(rank, participant)}
+                                        className="mr-1"
+                                      />
+                                      <span>{participant}</span>
+                                    </div>
+                                  )
+                                ))}
+                              </ScrollArea>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                )}
+              </ScrollArea>
+            </div>
+            <Button onClick={applyScoreUpdates} className="w-full">
+              結果へ
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -244,7 +330,7 @@ const RoomPage = ({ params }) => {
                   className="flex justify-between items-center bg-gray-200 p-2 mb-2 rounded-lg"
                 >
                   <span>
-                    {player.name} - 現在の得点: {player.score.toFixed(2)}点
+                    {player.name} - 現在の得点: {player.score.toFixed(1)}点
                   </span>
                   <Button onClick={() => deletePlayer(player.name)}>削除</Button>
                 </li>
