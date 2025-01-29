@@ -259,6 +259,9 @@ const RoomPage = ({ params }) => {
                         }
                         placeholder="得点"
                         className="w-32"
+
+// ここで０を入力するとundefinedになっておかしくなる
+
                       />
                       {knockoutEnabled && (
                         <div className="ml-4">
