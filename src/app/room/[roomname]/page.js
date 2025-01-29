@@ -129,7 +129,7 @@ const RoomPage = ({ params }) => {
         <DialogTrigger>
           <Button>得点計算へ</Button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className="max-h-[90%] overflow-hidden">
           <DialogHeader>
             <DialogTitle>得点計算入力フォーム</DialogTitle>
             <DialogDescription>
@@ -137,6 +137,7 @@ const RoomPage = ({ params }) => {
             </DialogDescription>
           </DialogHeader>
 
+          <div className="flex flex-col space-y-4 overflow-y-scroll">
           {/* 参加者選択 */}
           <div className="mb-4">
             <label className="block mb-2 font-semibold">参加者を選択:</label>
@@ -211,6 +212,7 @@ const RoomPage = ({ params }) => {
           <Button onClick={applyScoreUpdates} className="w-full">
             結果へ
           </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
