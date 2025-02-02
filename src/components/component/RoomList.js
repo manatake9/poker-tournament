@@ -18,11 +18,11 @@ import { Button } from "../ui/button";
 import Link from 'next/link';
 import { deleteRoom, getAllRooms } from '../../../lib/utils/supabaseFunctions';
 
-const RoomList = ({ rooms , onAddRoom}) => {
+const RoomList = ({ rooms , setRooms}) => {
   const handleDelete = async (roomId) => {
     await deleteRoom(roomId);
-    const rooms = await getAllRooms();
-    onAddRoom(rooms);
+    const newRooms = await getAllRooms();
+    setRooms(newRooms);
   }
 
   return (
@@ -32,7 +32,7 @@ const RoomList = ({ rooms , onAddRoom}) => {
           <h4 className="mb-4 text-base font-medium leading-none">ルーム一覧</h4>
           {rooms.map((room) => (
             <div key={room.room_id} className="text-base p-2 rounded flex justify-between items-center">
-              <Link href="/room/{room.room_id}" className="block w-full max-w-sm p-4 bg-white rounded-lg hover:bg-gray-200 transition-all">
+              <Link href={`/room/${room.room_id}`} className="block w-full max-w-sm p-4 bg-white rounded-lg hover:bg-gray-200 transition-all">
                 {room.room_name}
               </Link>
               <AlertDialog>
@@ -50,7 +50,6 @@ const RoomList = ({ rooms , onAddRoom}) => {
                     <AlertDialogCancel>キャンセル</AlertDialogCancel>
                     <AlertDialogAction onClick={() => handleDelete(room.room_id)}>
                       削除する
-                      {/* 削除関数の作成お願いします */}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

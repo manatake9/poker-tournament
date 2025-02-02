@@ -11,7 +11,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { addRoom, getAllRooms } from '../../../lib/utils/supabaseFunctions';
 
-const RoomInputForm = ({ onAddRoom }) => {
+const RoomInputForm = ({ setRooms }) => {
     const [newRoomName, setNewRoomName] = useState("");
 
     const handleSubmit = async (e) => {
@@ -19,10 +19,10 @@ const RoomInputForm = ({ onAddRoom }) => {
     
         if (newRoomName.trim() === "") return;
         
-        setNewRoomName("");
         await addRoom(newRoomName);
-        const rooms = await getAllRooms();
-        onAddRoom(rooms);
+        setNewRoomName("");
+        const newRooms = await getAllRooms();
+        setRooms(newRooms);
     };
 
   return (
