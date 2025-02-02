@@ -204,9 +204,9 @@ const RoomPage = ({ params }) => {
       </Button>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogTrigger>
-          <Button>得点計算へ</Button>
-        </DialogTrigger>
+      <DialogTrigger asChild>
+        <Button>得点計算へ</Button>
+      </DialogTrigger>
         <DialogContent className="max-h-[90%] overflow-hidden">
           <DialogHeader>
             <DialogTitle>得点計算入力フォーム</DialogTitle>
