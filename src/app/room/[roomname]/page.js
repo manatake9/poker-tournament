@@ -109,14 +109,14 @@ const RoomPage = ({ params }) => {
   
             // 順位ボーナスを適用する場合
             if (applyBonus) {
-              // 順位は入力順に合わせて計算
               const sortedRanking = Object.values(rankingData)
-                .map((data) => data.player); // 順位のリストを作成
+                .map((data) => data.player);
   
               const playerRank = sortedRanking.indexOf(player.name); // プレイヤーの順位を取得
               const totalParticipants = sortedRanking.length;
   
               // 順位ボーナス計算式を適用
+              // 順位ボーナス = 初期持ち点 / 200 - (プレイヤーの順位 * 初期持ち点) / (100 * (参加者数 - 1))
               const bonus = parseInt(initialScore, 10) / 200 - (playerRank * parseInt(initialScore, 10)) / (100 * (totalParticipants - 1));
   
               console.log(`順位ボーナス計算: プレイヤー${player.name} の順位: ${playerRank}`);
@@ -192,12 +192,12 @@ const RoomPage = ({ params }) => {
     setInitialScore("");
     setRankingData({});
     setApplyBonus(false);
-    setIncorrectScores([]); // 誤った得点情報をリセット
+    setIncorrectScores([]); // 得点情報をリセット
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-4">
-      <h1 className="text-3xl font-bold mb-6">現在の得点</h1>
+      <h1 className="text-3xl font-bold mb-6">得点管理</h1>
 
       <Button onClick={() => router.back()} className="mb-4">
         部屋選択へ戻る
@@ -270,6 +270,7 @@ const RoomPage = ({ params }) => {
                   (_, rank) => (
                     <div key={rank} className="flex items-center mb-4">
                       <span className="mr-4">{rank + 1}位:</span>
+                      {/* 順位入力 */}
                       <select
                         value={rankingData[rank + 1]?.player || ""}
                         onChange={(e) =>
@@ -284,12 +285,18 @@ const RoomPage = ({ params }) => {
                           </option>
                         ))}
                       </select>
+                      {/* 得点入力 */}
                       <Input
                         type="number"
-                        value={rankingData[rank + 1]?.score || ""}
-                        onChange={(e) =>
-                          handleRankingDataChange(rank + 1, "score", e.target.value)
-                        }
+                        value={rankingData[rank + 1]?.score ?? ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          handleRankingDataChange(
+                            rank + 1,
+                            "score",
+                            value && /^\d+$/.test(value) ? parseInt(value, 10) : ""
+                          );
+                        }}
                         placeholder="得点"
                         className="w-32"
                       />
@@ -307,6 +314,7 @@ const RoomPage = ({ params }) => {
         </DialogContent>
       </Dialog>
 
+      {/* ゼロサムでない場合の処理 */}
       <AlertDialog open={showWarning} onOpenChange={setShowWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -314,20 +322,27 @@ const RoomPage = ({ params }) => {
           </AlertDialogHeader>
           <AlertDialogDescription>
             <div>
-              {incorrectScores.map((scoreData, index) => (
-                <div key={index}>
-                  <p>{`${scoreData.name}, 持ち点${scoreData.score}点`}</p>
-                  <p>計算結果：{scoreData.score.toFixed(2)}点</p>
-                </div>
-              ))}
+              {(() => {
+                const expectedTotalScore = initialScore * Object.values(rankingData).length;
+                const actualTotalScore = Object.values(rankingData).reduce((sum, data) => sum + data.score, 0);
+                const totalDifference = actualTotalScore - expectedTotalScore;
+                return (
+                  <div className="mt-4">
+                    <div>初期持ち点の総和：{expectedTotalScore}点</div>
+                    <div>現在の総得点：{actualTotalScore}点</div>
+                    <div>総得点の誤差：{totalDifference}点</div>
+                  </div>
+                );
+              })()}
             </div>
             <div className="flex justify-end gap-2 mt-4">
               <Button onClick={() => setShowWarning(false)}>キャンセル</Button>
-              <Button onClick={finalizeScoreUpdate}>OK</Button>
             </div>
           </AlertDialogDescription>
         </AlertDialogContent>
       </AlertDialog>
+
+
 
       <Card>
         <div>
@@ -335,8 +350,12 @@ const RoomPage = ({ params }) => {
             <CardTitle>プレイヤーの管理</CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="mb-4">
-              {players.map((player, index) => (
+          {/* 現在の得点表示 */}
+          <ul className="mb-4">
+            {players
+              .slice()
+              .sort((a, b) => b.score - a.score)
+              .map((player, index) => (
                 <li
                   key={index}
                   className="flex justify-between items-center bg-gray-200 p-2 mb-2 rounded-lg"
@@ -347,8 +366,8 @@ const RoomPage = ({ params }) => {
                   <Button onClick={() => deletePlayer(player.name)}>削除</Button>
                 </li>
               ))}
-            </ul>
-
+          </ul>
+          {/* プレイヤーの追加フォーム */}
             <div className="flex items-center gap-2">
               <Input
                 value={newPlayerName}
