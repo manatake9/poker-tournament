@@ -44,7 +44,7 @@ const PlayerManagement = ({ players, setPlayers, roomId }) => {
                         className="flex justify-between items-center bg-gray-200 p-2 mb-2 rounded-lg"
                         >
                             <span>
-                                {player?.player_name??"no name"} - 現在の得点: {player?.player_score??"0"}点
+                                {player?.player_name??"no name"} - 現在の得点: {player?.player_score.toFixed(1)??"0"}点
                             </span>
                             <Button onClick={() => handleDelete(player?.player_id)}>削除</Button>
                         </li>

@@ -64,12 +64,12 @@ const ScoreCalculartion = ({ players, setPlayers, roomId }) => {
     const finalizeScoreUpdate = async () => {
         const newDataList = [];
         selectedParticipants.map((player) =>{
-            // x:参加費、n:参加人数、持ち点:p、順位:r として、得点 = (p / 2) + (x * (n - r) / (n - 1)) - x
+            // x:参加費、n:参加人数、持ち点:p、順位:r として、得点 = {(p / 2) + (x * (n - r) / (n - 1)) - x} / 100
             const x = parseInt(initialScore, 10);
             const n = selectedParticipants.length;
             const p = rankingData[player.player_id].score;
             const r = parseInt(rankingData[player.player_id].rank, 10);
-            const newScore = (p / 2) + (x * (n - r) / (n - 1)) - x + player.player_score;
+            const newScore = ((p / 2) + (x * (n - r) / (n - 1)) - x) / 100 + player.player_score;
 
             const data = {
                 player_id: player.player_id,

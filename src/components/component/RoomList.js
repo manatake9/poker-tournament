@@ -30,7 +30,7 @@ const RoomList = ({ rooms , setRooms}) => {
       <ScrollArea className="h-72 w-70 rounded-md border bg-white mb-5">
         <div className="p-4">
           <h4 className="mb-4 text-base font-medium leading-none">ルーム一覧</h4>
-          {rooms.map((room) => (
+          {rooms?.map((room) => (
             <div key={room.room_id} className="text-base p-2 rounded flex justify-between items-center">
               <Link href={`/room/${room.room_id}`} className="block w-full max-w-sm p-4 bg-white rounded-lg hover:bg-gray-200 transition-all">
                 {room.room_name}
