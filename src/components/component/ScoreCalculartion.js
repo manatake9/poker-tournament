@@ -51,12 +51,17 @@ const ScoreCalculartion = ({ players, setPlayers, roomId }) => {
         const totalInputScore = Object.values(rankingData).reduce((sum, { score }) => sum + parseInt(score, 10), 0);
     
         const expectedTotalScore = selectedParticipants.length * parseInt(initialScore, 10);
-    
+        
+        // 合計値が正しいか
         if (totalInputScore !== expectedTotalScore) {
             setShowWarning(true);
-        } else if (selectedParticipants.length < 2) {
+        }
+        // 参加人数が2人以上か
+        else if (selectedParticipants.length < 2) {
 
-        } else {
+        }
+        
+        else {
           finalizeScoreUpdate();
         }
     };
@@ -145,34 +150,36 @@ const ScoreCalculartion = ({ players, setPlayers, roomId }) => {
                             <label className="block mb-2 font-semibold">順位入力:</label>
                             <ScrollArea className="h-64 border p-2">
                                 {selectedParticipants.map((player) => (
-                                    <div key={player.player_id} className="flex items-center mb-4">
+                                    <div key={player.player_id} className="flex justify-between items-center mb-4">
                                         <span className="mr-4">{player.player_name}</span>
-                                        <select
-                                            value={rankingData[player.player_id].rank}
-                                            onChange={(e) =>
-                                                handleRankingDataChange(player.player_id, "rank", e.target.value)
-                                            }
-                                            className="mr-4 border p-1"
-                                        >
-                                            <option value="">選択してください</option>
-                                            {Array.from({ length: selectedParticipants.length }).map((_, rank) => (
-                                                <option key={rank} value={rank + 1}>
-                                                    {rank + 1}位
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            value={rankingData[player.player_id].score}
-                                            onChange={(e) => {
-                                                const value = e.target.value;
-                                                handleRankingDataChange(player.player_id, "score", value)
-                                            }}
+                                        <div className='flex items-center'>
+                                            <select
+                                                value={rankingData[player.player_id].rank}
+                                                onChange={(e) =>
+                                                    handleRankingDataChange(player.player_id, "rank", e.target.value)
+                                                }
+                                                className="mr-4 border p-1"
+                                            >
+                                                <option value="">選択してください</option>
+                                                {Array.from({ length: selectedParticipants.length }).map((_, rank) => (
+                                                    <option key={rank} value={rank + 1}>
+                                                        {rank + 1}位
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                value={rankingData[player.player_id].score}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    handleRankingDataChange(player.player_id, "score", value)
+                                                }}
 
-                                            placeholder="得点"
-                                            className="w-32"
-                                        />
+                                                placeholder="得点"
+                                                className="w-32"
+                                            />
+                                        </div>
                                     </div>
                                 ))}
                             </ScrollArea>
