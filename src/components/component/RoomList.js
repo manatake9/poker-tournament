@@ -50,7 +50,6 @@ const RoomList = ({ rooms , onAddRoom}) => {
                     <AlertDialogCancel>キャンセル</AlertDialogCancel>
                     <AlertDialogAction onClick={() => handleDelete(room.room_id)}>
                       削除する
-                      {/* 削除関数の作成お願いします */}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
