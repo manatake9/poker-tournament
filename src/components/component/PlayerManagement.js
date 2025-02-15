@@ -1,70 +1,81 @@
 "use client";
 
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../ui/card";
+  addPlayer,
+  deletePlayer,
+  getAllPlayers,
+} from "../../../lib/utils/supabaseFunctions";
 
-const PlayerManagement = ({ players, setPlayers }) => {
-
+const PlayerManagement = ({ players, setPlayers, roomId }) => {
   const [newPlayerName, setNewPlayerName] = useState("");
 
-  const addPlayer = () => {
-    if (newPlayerName.trim() !== "") {
-      setPlayers([...players, { name: newPlayerName.trim(), score: 0 }]);
-      setNewPlayerName("");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (newPlayerName.trim() === "") return;
+
+    console.log("追加するプレイヤー:", newPlayerName, "部屋ID:", roomId);
+
+    if (!roomId) {
+      console.error(
+        "エラー: 部屋IDが未定義のため、プレイヤーを追加できません。"
+      );
+      return;
     }
+    await addPlayer(newPlayerName, roomId);
+    setNewPlayerName("");
+    const updatedPlayers = await getAllPlayers(roomId);
+    setPlayers(updatedPlayers || []);
   };
 
-  const deletePlayer = (playerName) => {
-    setPlayers(players.filter((player) => player.name !== playerName));
+  const handleDelete = async (playerId) => {
+    await deletePlayer(playerId);
+    const updatedPlayers = await getAllPlayers(roomId);
+    setPlayers(updatedPlayers || []);
   };
 
   return (
-      <Card>
-        <div>
-          <CardHeader>
-            <CardTitle>プレイヤーの管理</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* 現在の得点表示 */}
-            <ul className="mb-4">
-              {players
-                .slice()
-                .sort((a, b) => b.score - a.score)
-                .map((player, index) => (
-                  <li
-                    key={index}
-                    className="flex justify-between items-center bg-gray-200 p-2 mb-2 rounded-lg"
-                  >
-                    <span>
-                      {player.name} - 現在の得点: {player.score.toFixed(2)}点
-                    </span>
-                    <Button onClick={() => deletePlayer(player.name)}>
-                      削除
-                    </Button>
-                  </li>
-                ))}
-            </ul>
-            {/* プレイヤーの追加フォーム */}
-            <div className="flex items-center gap-2">
-              <Input
-                value={newPlayerName}
-                onChange={(e) => setNewPlayerName(e.target.value)}
-                placeholder="プレイヤー名を入力"
-                className="flex-1"
-              />
-              <Button onClick={addPlayer}>追加</Button>
-            </div>
-          </CardContent>
-        </div>
-      </Card>
+    <Card>
+      <CardHeader>
+        <CardTitle>プレイヤーの管理</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ul className="mb-4">
+          {players
+            .slice()
+            .sort((a, b) => b.player_score - a.player_score)
+            .map((player) => (
+              <li
+                key={player?.player_id}
+                className="flex justify-between items-center bg-gray-200 p-2 mb-2 rounded-lg"
+              >
+                <span>
+                  {player?.player_name ?? "no name"} - 現在の得点:{" "}
+                  {player?.player_score?.toFixed(1) ?? "0"}点
+                </span>
+                <Button onClick={() => handleDelete(player?.player_id)}>
+                  削除
+                </Button>
+              </li>
+            ))}
+        </ul>
+
+        <form
+          className="flex items-center gap-2"
+          onSubmit={(e) => handleSubmit(e)}
+        >
+          <Input
+            value={newPlayerName}
+            onChange={(e) => setNewPlayerName(e.target.value)}
+            placeholder="プレイヤー名を入力"
+          />
+          <Button type="submit">追加</Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 

@@ -1,8 +1,7 @@
 import { getAllRooms } from "../../lib/utils/supabaseFunctions";
-import RoomListPage from '../components/component/RoomListPage';
+import RoomListPage from "../components/component/RoomListPage";
 
 const PokerScoreManager = async () => {
-
   const allRooms = await getAllRooms();
   console.log(allRooms);
 

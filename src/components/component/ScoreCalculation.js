@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import {
@@ -20,164 +19,100 @@ import {
   AlertDialogTitle,
 } from "../ui/alert-dialog";
 import { ScrollArea } from "../ui/scroll-area";
+import {
+  updateScore,
+  getAllPlayers,
+} from "../../../lib/utils/supabaseFunctions";
 
-const ScoreCalculation = ({ players, setPlayers }) => {
+const ScoreCalculation = ({ players, setPlayers, roomId }) => {
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedParticipants, setSelectedParticipants] = useState([]);
   const [initialScore, setInitialScore] = useState("");
   const [rankingData, setRankingData] = useState({});
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
   const [applyBonus, setApplyBonus] = useState(false);
-  const [incorrectScores, setIncorrectScores] = useState([]);
 
-  const toggleParticipant = (playerName) => {
+  const toggleParticipant = (player) => {
     setSelectedParticipants((prev) =>
-      prev.includes(playerName)
-        ? prev.filter((name) => name !== playerName)
-        : [...prev, playerName]
+      prev.includes(player)
+        ? prev.filter((p) => p !== player)
+        : [...prev, player]
+    );
+    setRankingData((prev) =>
+      prev[player.player_id]
+        ? Object.fromEntries(
+            Object.entries(prev).filter(([key]) => key !== player.player_id)
+          )
+        : { ...prev, [player.player_id]: { rank: "", score: 0 } }
     );
   };
 
-  const handleRankingDataChange = (rank, field, value) => {
+  const handleRankingDataChange = (playerId, field, value) => {
     setRankingData((prev) => ({
       ...prev,
-      [rank]: {
-        ...prev[rank],
-        [field]:
-          field === "score" ? Math.max(parseInt(value, 10) || 0, 0) : value,
+      [playerId]: {
+        ...prev[playerId],
+        [field]: field === "score" ? parseInt(value, 10) || 0 : value,
       },
     }));
-  };
-
-  const applyScoreUpdates = () => {
-    const totalInputScore = Object.values(rankingData).reduce(
-      (sum, { score }) => sum + score,
-      0
-    );
-    const expectedTotalScore =
-      selectedParticipants.length * parseInt(initialScore, 10);
-
-    console.log("### applyScoreUpdates ###");
-    console.log("選択されたプレイヤー:", selectedParticipants);
-    console.log("初期持ち点:", initialScore);
-    console.log("入力された合計点数:", totalInputScore);
-    console.log("期待される合計点数:", expectedTotalScore);
-
-    if (totalInputScore !== expectedTotalScore) {
-      console.log("得点に誤差があります。誤った得点情報を表示します。");
-
-      setIncorrectScores(
-        players
-          .map((player) => {
-            const playerData = Object.values(rankingData).find(
-              (data) => data.player === player.name
-            );
-            if (playerData) {
-              let playerScore =
-                player.score +
-                (playerData.score - parseInt(initialScore, 10)) / 100;
-
-              console.log(`${player.name} の得点計算前:`, playerScore);
-
-              // 順位ボーナスを適用する場合
-              if (applyBonus) {
-                const sortedRanking = Object.values(rankingData).map(
-                  (data) => data.player
-                );
-
-                const playerRank = sortedRanking.indexOf(player.name); // プレイヤーの順位を取得
-                const totalParticipants = sortedRanking.length;
-
-                // 順位ボーナス計算式を適用
-                // 順位ボーナス = 初期持ち点 / 200 - (プレイヤーの順位 * 初期持ち点) / (100 * (参加者数 - 1))
-                const bonus =
-                  parseInt(initialScore, 10) / 200 -
-                  (playerRank * parseInt(initialScore, 10)) /
-                    (100 * (totalParticipants - 1));
-
-                console.log(
-                  `順位ボーナス計算: プレイヤー${player.name} の順位: ${playerRank}`
-                );
-                console.log(`順位ボーナス: ${bonus}`);
-                playerScore += bonus;
-              }
-
-              console.log(`${player.name} の最終得点:`, playerScore);
-
-              return {
-                name: player.name,
-                score: playerScore,
-                expectedScore: parseInt(initialScore, 10),
-                bonus: applyBonus,
-              };
-            }
-            return null;
-          })
-          .filter((scoreData) => scoreData !== null)
-      );
-      setShowWarning(true);
-    } else if (selectedParticipants.length < 2) {
-      setShowWarning(true);
-    } else {
-      console.log("得点に誤差はありません。得点更新を確定します。");
-      finalizeScoreUpdate();
-    }
-  };
-
-  const finalizeScoreUpdate = () => {
-    console.log("### finalizeScoreUpdate ###");
-
-    const updatedPlayers = players.map((player) => {
-      const playerData = Object.values(rankingData).find(
-        (data) => data.player === player.name
-      );
-      if (playerData) {
-        let newScore =
-          player.score + (playerData.score - parseInt(initialScore, 10)) / 100;
-
-        console.log(`${player.name} の得点計算前:`, newScore);
-
-        // 順位ボーナスを適用する場合
-        if (applyBonus) {
-          // 順位は入力順に合わせて計算
-          const sortedRanking = Object.values(rankingData).map(
-            (data) => data.player
-          ); // 順位のリストを作成
-
-          const playerRank = sortedRanking.indexOf(player.name); // プレイヤーの順位を取得
-          const totalParticipants = sortedRanking.length;
-
-          // 順位ボーナス計算式を適用
-          const bonus =
-            parseInt(initialScore, 10) / 200 -
-            (playerRank * parseInt(initialScore, 10)) /
-              (100 * (totalParticipants - 1));
-
-          console.log(
-            `順位ボーナス計算: プレイヤー${player.name} の順位: ${playerRank}`
-          );
-          console.log(`順位ボーナス: ${bonus}`);
-          newScore += bonus;
-        }
-
-        console.log(`${player.name} の最終得点:`, newScore);
-
-        return { ...player, score: newScore };
-      }
-      return player;
-    });
-
-    setPlayers(updatedPlayers);
-    resetInputStates();
-    setDialogOpen(false);
   };
 
   const resetInputStates = () => {
     setSelectedParticipants([]);
     setInitialScore("");
     setRankingData({});
-    setApplyBonus(false);
-    setIncorrectScores([]); // 得点情報をリセット
+  };
+
+  const applyScoreUpdates = async () => {
+    const totalInputScore = Object.values(rankingData).reduce(
+      (sum, { score }) => sum + parseInt(score, 10),
+      0
+    );
+    const expectedTotalScore =
+      selectedParticipants.length * parseInt(initialScore, 10);
+
+    if (totalInputScore !== expectedTotalScore) {
+      setShowWarning(true);
+    } else if (selectedParticipants.length < 2) {
+      setShowWarning(true);
+    } else {
+      finalizeScoreUpdate();
+    }
+  };
+
+  const finalizeScoreUpdate = async () => {
+    const newDataList = selectedParticipants.map((player) => {
+      const x = parseInt(initialScore, 10);
+      const n = selectedParticipants.length;
+      const p = parseInt(rankingData[player.player_id]?.score, 10) || 0; // デフォルト 0
+      const r = parseInt(rankingData[player.player_id]?.rank, 10) || n; // 順位未入力なら最下位扱い
+      const bonus = applyBonus ? x / 200 - ((r - 1) * x) / (100 * (n - 1)) : 0;
+      // 初期持ち点 / 200 - (プレイヤーの順位 * 初期持ち点) / (100 * (参加者数 - 1))
+      const newScore = bonus + (p - x) / 100;
+
+      // 各プレイヤーのスコア計算をログに出力
+      console.log(`Player ID: ${player.player_id}`);
+      console.log(`Original Score: ${p}`);
+      console.log(`Bonus: ${bonus}`);
+      console.log(`New Score: ${newScore}`);
+
+      return {
+        player_id: player.player_id,
+        player_name: player.player_name,
+        player_score: newScore,
+        room_id: roomId,
+      };
+    });
+
+    await updateScore(newDataList);
+    resetInputStates();
+    setDialogOpen(false);
+    const newPlayers = await getAllPlayers(roomId);
+
+    // 更新後のプレイヤーデータをログに出力
+    console.log("Updated Players List:", newPlayers);
+
+    setPlayers(newPlayers);
   };
 
   return (
@@ -193,42 +128,33 @@ const ScoreCalculation = ({ players, setPlayers }) => {
               以下の入力欄でプレイヤー情報を設定してください。
             </DialogDescription>
           </DialogHeader>
-
           <div className="flex flex-col space-y-4 overflow-y-scroll">
-            {/* 参加者選択 */}
             <div className="mb-4">
               <label className="block mb-2 font-semibold">参加者を選択:</label>
               <ScrollArea className="h-32 border p-2">
-                {players.map((player, index) => (
-                  <div key={index} className="flex items-center mb-2">
+                {players?.map((player) => (
+                  <div key={player.player_id}>
                     <input
                       type="checkbox"
-                      checked={selectedParticipants.includes(player.name)}
-                      onChange={() => toggleParticipant(player.name)}
+                      checked={selectedParticipants.includes(player)}
+                      onChange={() => toggleParticipant(player)}
                       className="mr-2"
                     />
-                    <span>{player.name}</span>
+                    <span>{player.player_name}</span>
                   </div>
                 ))}
               </ScrollArea>
             </div>
-
-            {/* 初期点の入力 */}
-            <div className="mb-4">
+            <div>
               <label className="block mb-2 font-semibold">初期持ち点:</label>
               <Input
                 type="number"
                 value={initialScore}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setInitialScore(value && /^\d+$/.test(value) ? value : "");
-                }}
+                onChange={(e) => setInitialScore(e.target.value)}
                 placeholder="初期持ち点を入力"
                 className="w-full"
               />
             </div>
-
-            {/* 順位ボーナス適用チェックボックス */}
             <div className="mb-4">
               <label className="flex items-center">
                 <input
@@ -240,66 +166,61 @@ const ScoreCalculation = ({ players, setPlayers }) => {
                 順位ボーナスを適用する
               </label>
             </div>
+            <div>
+              <ScrollArea className="p-4 border rounded-lg max-h-80 overflow-y-auto">
+                {selectedParticipants.map((player) => (
+                  <div
+                    key={player.player_id}
+                    className="flex items-center justify-between p-3 border-b last:border-b-0"
+                  >
+                    {/* プレイヤー名 */}
+                    <span className="w-1/3 font-medium">
+                      {player.player_name}
+                    </span>
 
-            {/* 順位に対するプレイヤーと持ち点の入力 */}
-            <div className="mb-4">
-              <label className="block mb-2 font-semibold">順位入力:</label>
-              <ScrollArea className="h-64 border p-2">
-                {Array.from({ length: selectedParticipants.length }).map(
-                  (_, rank) => (
-                    <div key={rank} className="flex items-center mb-4">
-                      <span className="mr-4">{rank + 1}位:</span>
-                      {/* 順位入力 */}
-                      <select
-                        value={rankingData[rank + 1]?.player || ""}
-                        onChange={(e) =>
-                          handleRankingDataChange(
-                            rank + 1,
-                            "player",
-                            e.target.value
-                          )
-                        }
-                        className="mr-4 border p-1"
-                      >
-                        <option value="">選択してください</option>
-                        {selectedParticipants.map((participant) => (
-                          <option key={participant} value={participant}>
-                            {participant}
+                    {/* 順位選択 */}
+                    <select
+                      value={rankingData[player.player_id]?.rank || ""}
+                      onChange={(e) =>
+                        handleRankingDataChange(
+                          player.player_id,
+                          "rank",
+                          e.target.value
+                        )
+                      }
+                      className="w-1/3 p-2 border rounded-lg"
+                    >
+                      <option value="">選択</option>
+                      {Array.from({ length: selectedParticipants.length }).map(
+                        (_, index) => (
+                          <option key={index} value={index + 1}>
+                            {index + 1}位
                           </option>
-                        ))}
-                      </select>
-                      {/* 得点入力 */}
-                      <Input
-                        type="number"
-                        value={rankingData[rank + 1]?.score ?? ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          handleRankingDataChange(
-                            rank + 1,
-                            "score",
-                            value && /^\d+$/.test(value)
-                              ? parseInt(value, 10)
-                              : ""
-                          );
-                        }}
-                        placeholder="得点"
-                        className="w-32"
-                      />
-                    </div>
-                  )
-                )}
+                        )
+                      )}
+                    </select>
+
+                    {/* スコア入力 */}
+                    <Input
+                      type="number"
+                      value={rankingData[player.player_id]?.score}
+                      onChange={(e) =>
+                        handleRankingDataChange(
+                          player.player_id,
+                          "score",
+                          e.target.value
+                        )
+                      }
+                      className="w-1/3 p-2 border rounded-lg text-right"
+                    />
+                  </div>
+                ))}
               </ScrollArea>
             </div>
-
-            {/* 得点確認ボタン */}
-            <Button onClick={applyScoreUpdates} className="w-full">
-              結果へ
-            </Button>
+            <Button onClick={applyScoreUpdates}>結果へ</Button>
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* ゼロサムでない,参加者が一人,の場合の処理 */}
       <AlertDialog open={showWarning} onOpenChange={setShowWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -308,15 +229,16 @@ const ScoreCalculation = ({ players, setPlayers }) => {
           <AlertDialogDescription>
             {(() => {
               const expectedTotalScore =
-                initialScore * Object.values(rankingData).length;
-              const actualTotalScore = Object.values(rankingData).reduce(
-                (sum, data) => sum + data.score,
+                selectedParticipants.length * parseInt(initialScore, 10);
+              const actualTotalScore = selectedParticipants.reduce(
+                (sum, player) =>
+                  sum +
+                  (parseInt(rankingData[player.player_id]?.score, 10) || 0),
                 0
               );
               const totalDifference = actualTotalScore - expectedTotalScore;
-              const participantCount = Object.values(rankingData).length;
 
-              if (participantCount  < 2) {
+              if (selectedParticipants.length < 2) {
                 return (
                   <span>
                     エラー: 参加者が一人だけでは得点計算ができません。
