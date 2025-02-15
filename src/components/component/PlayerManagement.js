@@ -5,6 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
+import {
   addPlayer,
   deletePlayer,
   getAllPlayers,
@@ -56,9 +67,27 @@ const PlayerManagement = ({ players, setPlayers, roomId }) => {
                   {player?.player_name ?? "no name"} - 現在の得点:{" "}
                   {player?.player_score?.toFixed(1) ?? "0"}点
                 </span>
-                <Button onClick={() => handleDelete(player?.player_id)}>
-                  削除
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button>削除</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>プレイヤー削除</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        本当にこのプレイヤーを削除しますか？この操作は元に戻せません。
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => handleDelete(player?.player_id)}
+                      >
+                        削除する
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </li>
             ))}
         </ul>
