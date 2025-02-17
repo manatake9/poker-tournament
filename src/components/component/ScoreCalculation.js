@@ -72,8 +72,10 @@ const ScoreCalculation = ({ players, setPlayers, roomId }) => {
       selectedParticipants.length * parseInt(initialScore, 10);
 
     if (totalInputScore !== expectedTotalScore) {
+      // 総得点が初期持ち点の総和と一致しない場合はエラー表示
       setShowWarning(true);
     } else if (selectedParticipants.length < 2) {
+      // 参加者一人ならエラー表示
       setShowWarning(true);
     } else {
       finalizeScoreUpdate();

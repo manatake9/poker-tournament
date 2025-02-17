@@ -8,7 +8,7 @@ import { Button } from "../ui/button";
 
 function ScoreCalculationPage({ allPlayers }) {
   const router = useRouter();
-  const pathname = usePathname(); // ← Next.jsのURL取得用
+  const pathname = usePathname(); // Next.jsのURL取得用
   const [players, setPlayers] = useState(allPlayers || []);
   const [roomId, setRoomId] = useState(null);
 
