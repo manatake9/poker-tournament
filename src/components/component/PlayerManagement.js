@@ -23,6 +23,22 @@ import {
 
 const PlayerManagement = ({ players, setPlayers, roomId }) => {
   const [newPlayerName, setNewPlayerName] = useState("");
+  const [num1, setNum1] = useState(0);
+  const [num2, setNum2] = useState(0);
+  const [answer, setAnswer] = useState("");
+  const [isCorrect, setIsCorrect] = useState(false);
+
+  const generateNewNumbers = () => {
+    setNum1(Math.floor(Math.random() * 9) + 1);
+    setNum2(Math.floor(Math.random() * 9) + 1);
+    setAnswer("");
+    setIsCorrect(false);
+  };
+
+  const checkAnswer = (value) => {
+    setAnswer(value);
+    setIsCorrect(parseInt(value) === num1 + num2);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -67,7 +83,9 @@ const PlayerManagement = ({ players, setPlayers, roomId }) => {
                   {player?.player_name ?? "no name"} - 現在の得点:{" "}
                   {player?.player_score?.toFixed(1) ?? "0"}点
                 </span>
-                <AlertDialog>
+                <AlertDialog
+                  onOpenChange={(open) => open && generateNewNumbers()}
+                >
                   <AlertDialogTrigger asChild>
                     <Button>削除</Button>
                   </AlertDialogTrigger>
@@ -77,11 +95,21 @@ const PlayerManagement = ({ players, setPlayers, roomId }) => {
                       <AlertDialogDescription>
                         本当にこのプレイヤーを削除しますか？この操作は元に戻せません。
                       </AlertDialogDescription>
+                      <p>
+                        {num1} + {num2} = ?
+                      </p>
+                      <Input
+                        type="number"
+                        value={answer}
+                        onChange={(e) => checkAnswer(e.target.value)}
+                        placeholder="答えを入力"
+                      />
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>キャンセル</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => handleDelete(player?.player_id)}
+                        disabled={!isCorrect}
                       >
                         削除する
                       </AlertDialogAction>

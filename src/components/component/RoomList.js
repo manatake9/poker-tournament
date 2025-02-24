@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,6 +15,7 @@ import {
 } from "../ui/alert-dialog";
 import { ScrollArea } from "../ui/scroll-area";
 import { Separator } from "../ui/separator";
+import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import { deleteRoom, getAllRooms } from "../../../lib/utils/supabaseFunctions";
@@ -23,6 +25,23 @@ const RoomList = ({ rooms, onAddRoom }) => {
     await deleteRoom(roomId);
     const rooms = await getAllRooms();
     onAddRoom(rooms);
+  };
+
+  const [num1, setNum1] = useState(0);
+  const [num2, setNum2] = useState(0);
+  const [answer, setAnswer] = useState("");
+  const [isCorrect, setIsCorrect] = useState(false);
+
+  const generateNewNumbers = () => {
+    setNum1(Math.floor(Math.random() * 9) + 1);
+    setNum2(Math.floor(Math.random() * 9) + 1);
+    setAnswer("");
+    setIsCorrect(false);
+  };
+
+  const checkAnswer = (value) => {
+    setAnswer(value);
+    setIsCorrect(parseInt(value) === num1 + num2);
   };
 
   return (
@@ -44,7 +63,9 @@ const RoomList = ({ rooms, onAddRoom }) => {
                 {room.room_name}
               </Link>
 
-              <AlertDialog>
+              <AlertDialog
+                onOpenChange={(open) => open && generateNewNumbers()}
+              >
                 <AlertDialogTrigger asChild>
                   <Button>削除</Button>
                 </AlertDialogTrigger>
@@ -54,11 +75,21 @@ const RoomList = ({ rooms, onAddRoom }) => {
                     <AlertDialogDescription>
                       本当にこのルームを削除しますか？この操作は元に戻せません。
                     </AlertDialogDescription>
+                    <p>
+                      {num1} + {num2} = ?
+                    </p>
+                    <Input
+                      type="number"
+                      value={answer}
+                      onChange={(e) => checkAnswer(e.target.value)}
+                      placeholder="答えを入力"
+                    />
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>キャンセル</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => handleDelete(room.room_id)}
+                      onClick={() => handleDelete(room?.room_id)}
+                      disabled={!isCorrect}
                     >
                       削除する
                     </AlertDialogAction>
